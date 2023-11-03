@@ -1,7 +1,7 @@
 # Proyecto-Rest
  Proyecto API REST en FastAPI para el ramo computación paralela 2-2023
 
- ## Requirementoss:
+ ## Requirementos:
 - Python3.6+
 
 ## Como correr el script:
