@@ -28,12 +28,15 @@ def root():
 
 @router.get("/v1", response_class=HTMLResponse)
 def v1():
-    google_creds = get_google_credentials()
-    if google_creds:
-        # Aquí podrías utilizar las credenciales para algo si es necesario
-        return contenido_html
-    else:
-        return "No hay credenciales válidas de Google"
+    try:
+        google_creds = get_google_credentials()
+        if google_creds:
+            # Aquí podrías utilizar las credenciales para algo si es necesario
+            return contenido_html
+        else:
+            return "No hay credenciales válidas de Google"
+    except Exception as e:
+        return f"Error en la autenticación: {str(e)}"
 
 @router.get("/v1/login")
 def login():
@@ -41,18 +44,14 @@ def login():
     if not creds or not creds.valid:
         creds = authorize_google_user()
     if creds:
-        return "Autenticación exitosa"
+        return "Autenticación exitosa", status.HTTP_200_OK
     else:
-        return "Error en la autenticación"
+        return "Error en la autenticación", status.HTTP_401_UNAUTHORIZED
     
 # Ruta protegida que requiere un token JWT para acceder
 @router.get("/v1/protected")
 async def protected_route(current_user: dict = Depends(verify_jwt)):
     # Verifica y decodifica el token JWT enviado en la solicitud
-    # Dependiendo de tu implementación de autenticación, aquí podrías realizar acciones
-    # utilizando la información del usuario (extraída del token) si el token es válido.
-    # Por ejemplo, podrías realizar operaciones específicas del usuario autenticado.
-
     if current_user:
         return {
             "message": "Esta es una ruta protegida",
