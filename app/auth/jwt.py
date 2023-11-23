@@ -17,11 +17,9 @@ ALGORITHM = "HS256" # Algoritmo utilizado para la codificación y decodificació
 
 jwtToken = None
 
-# Función para crear un token JWT a partir de las credenciales de Google
+# Función para crear y codificar un token JWT a partir de las credenciales de Google
 def createJWT(google_token: Credentials):
-
     global jwtToken
-
     # Configura el payload del token JWT con información relevante
     payload = {
         "sub": google_token.token,
@@ -31,34 +29,26 @@ def createJWT(google_token: Credentials):
     }
     # Codifica el token JWT usando la contraseña (PASSWD) y el algoritmo (ALGORITHM)
     jwtToken = jwt.encode(payload, key=PASSWD, algorithm=ALGORITHM)
-    #return jwtoken  # Retorna el token JWT recién creado
 
 # Función para verificar y decodificar un token JWT
 def verify_jwt():
-    global jwtToken     # Se llama a la variable global jwtToken
-    decode = jwtToken   # Se crea una copia de la variable global para utilizarla
-
+    global jwtToken #Referencia global
     # Excepción para manejar el caso en que el token no está disponible
-    credentialExeption = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Token no disponible",
-        headers={"WWW-Authenticate": "Bearer"}
-    )
-    # Excepción para manejar errores al decodificar el token
-    decodeExeption = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Error al decodificar el token",
-        headers={"WWW-Authenticate": "Bearer"}
-    )
-    # Verifica si el token no está disponible y lanza la excepción correspondiente
     if jwtToken is None:
-        raise credentialExeption
-    # Intenta decodificar el token y retorna el payload si tiene éxito
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token no disponible",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
     try:
-        payload = jwt.decode(decode, key=PASSWD, algorithms=[ALGORITHM])
-        return payload  # Retorna el payload del token JWT decodificado
-    # Lanza una excepción si hay un error al decodificar el token
+        payload = jwt.decode(jwtToken, key=PASSWD, algorithms=[ALGORITHM])
+        return payload # Retorna el payload del token JWT decodificado
+    # Excepción para manejar errores al decodificar el token
     except JWTError:
-        raise decodeExeption
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Error al decodificar el token",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
     
 
