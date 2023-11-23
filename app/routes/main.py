@@ -1,11 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
 
+from pydantic import BaseModel
+
+from datetime import datetime
+
 from app.auth.google_auth import get_google_credentials, authorize_google_user
 from app.auth.jwt import verify_jwt
 from app.db import conectar_bd
 
 router = APIRouter()
+
+class ReservaSQL(BaseModel):
+    usuario: str
+    sala: str
+    fechainicio: str
+    fechatermino: str
 
 
 # Contenido HTML para una página web simple
@@ -38,7 +48,7 @@ def v1():
     except Exception as e:
         return f"Error en la autenticación: {str(e)}"
 
-@router.get("/v1/login")
+@router.get("/v1/login") #Cambiar a route y probar
 def login():
     creds = get_google_credentials()
     if not creds or not creds.valid:
@@ -50,8 +60,9 @@ def login():
     
 # Ruta protegida que requiere un token JWT para acceder
 @router.get("/v1/protected")
-async def protected_route(current_user: dict = Depends(verify_jwt)):
+async def protected_route(current_user: dict):
     # Verifica y decodifica el token JWT enviado en la solicitud
+
     if current_user:
         return {
             "message": "Esta es una ruta protegida",
@@ -65,8 +76,8 @@ async def protected_route(current_user: dict = Depends(verify_jwt)):
         )
     
 @router.get("/v1/db")
-async def get_sala(current_user: dict = Depends(verify_jwt)): #Almacena la información del usuario (mail entre otras cosas)
-    conn = conectar_bd()  # No se usa 'await' ya que conectar_bd() no es una función asíncrona
+def get_sala(current_user: dict = Depends(verify_jwt)): #Almacena la información del usuario (mail entre otras cosas)
+    conn = conectar_bd()
 
     if current_user:
         if conn is not None:
@@ -77,7 +88,6 @@ async def get_sala(current_user: dict = Depends(verify_jwt)): #Almacena la infor
                 sala = cursor.fetchall()
                 cursor.close()
                 conn.close()
-                return sala
             except Exception as e:
                 print("Error al ejecutar la consulta:", e)
                 conn.close()  # En caso de error, cerrar la conexión
@@ -91,4 +101,49 @@ async def get_sala(current_user: dict = Depends(verify_jwt)): #Almacena la infor
             detail="Token inválido o expirado",
             headers={"WWW-Authenticate": "Bearer"}
         )
-        
+    return sala
+
+@router.get("/v1/email")
+def get_email(current_user: dict = Depends(verify_jwt)):
+    if current_user:
+        return {
+            "message": "Este es el mail obtenido del jwt",
+            "user": current_user["sub"],
+            "email": current_user["email"]
+        }
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido o expirado",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+@router.post("/v1/reserve/request")
+async def request(reserve: ReservaSQL, current_user: dict = Depends(verify_jwt)):
+    if current_user:
+        conn = conectar_bd()  # Obtiene una conexión a la base de datos
+        if conn is not None:
+            try:
+                cursor = conn.cursor()
+                query = "INSERT INTO reserva (usuario, sala, fechainicio, fechatermino) VALUES (%s, %s, %s, %s)"
+                values = (reserve.usuario, reserve.sala, reserve.fechainicio, reserve.fechatermino)
+                cursor.execute(query, values)
+                conn.commit()  # Guarda los cambios en la base de datos
+                cursor.close()
+                conn.close()  # Cierra la conexión después de su uso
+                return {"message": "Reserva creada exitosamente"}
+            except Exception as e:
+                print("Error al ejecutar la consulta:", e)
+                conn.close()  # En caso de error, asegúrate de cerrar la conexión
+                return None
+        else:
+            print("No se pudo conectar a la base de datos")
+            return None
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido o expirado",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    

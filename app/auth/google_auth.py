@@ -5,11 +5,13 @@ import os.path
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
+#from googleapiclient.discovery import build  # Importa la función build para crear un servicio
 
-from .jwt import createJWT, jwtToken
+
+from .jwt import createJWT
 
 # Lista de ámbitos (scopes) para la autenticación con Google OAuth2
-SCOPES = ['https://www.googleapis.com/auth/contacts.readonly']
+SCOPES = ['openid', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile']
 
 def get_google_credentials():
     if os.path.exists('token.json'):
@@ -18,15 +20,9 @@ def get_google_credentials():
         return creds
     return None
 
-""" def refresh_google_credentials(creds):
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-        return creds
-    return None """
-
 def authorize_google_user():
     creds = None
-    if creds and creds.expired and creds.refresh_token:
+    if creds != None and creds.expired and creds.refresh_token:
         creds.refresh(Request())
         createJWT(creds)
     else:

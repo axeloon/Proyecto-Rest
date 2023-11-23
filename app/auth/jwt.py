@@ -10,6 +10,8 @@ from jose import jwt, JWTError
 # Importa clases que son utilizadas para trabajar con fechas y duraciones en Python.
 from datetime import datetime, timedelta
 
+from .peopleAPI import get_google_email #Obtiene el email de las credenciales de google
+
 # Lista de ámbitos (scopes) para la autenticación con Google OAuth2
 SCOPES = ['https://www.googleapis.com/auth/contacts.readonly']
 PASSWD = '123456' #Contraseña para firmar el JWT
@@ -20,9 +22,13 @@ jwtToken = None
 # Función para crear y codificar un token JWT a partir de las credenciales de Google
 def createJWT(google_token: Credentials):
     global jwtToken
+
+    email = get_google_email(google_token)
+
     # Configura el payload del token JWT con información relevante
     payload = {
         "sub": google_token.token,
+        "email": email,
         "exp": datetime.utcnow() + timedelta(minutes=15),
         "scopes": SCOPES,
         #Se puede ingresar más información si es necesario

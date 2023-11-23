@@ -9,6 +9,7 @@ def conectar_bd():
             host="isabelle.db.elephantsql.com",
             port=5432  # Puerto por defecto de PostgreSQL
         )
+        print("Conexión con la BD establecida con éxito")
         return conn
     except (Exception, psycopg2.Error) as error:
         print("Error al conectar a la base de datos:", error)
