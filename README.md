@@ -1,10 +1,11 @@
 # Proyecto-Rest
- Proyecto API REST en FastAPI para el ramo Computación Paralela 2-2023
+Este repositorio contiene una implementación de autenticación a través de Google Oauth2, utilizando JWT.
+Proyecto API REST en FastAPI para la asignatura Computación Paralela 2-2023
 
- ## Características
+ ## Características:
  - Módulos google.oauth2.credentials para la autenticación com Google Oauth2.
  - Generación de token JWT con algoritmo de firma HS256.
- - 
+   
  ## Requirementos:
 - Python3.6+
 
