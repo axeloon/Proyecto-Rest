@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
 
+from typing import List, Union
+
 from app.auth.google_auth import get_google_credentials, authorize_google_user
 from app.auth.jwt import verify_jwt
 

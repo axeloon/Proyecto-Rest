@@ -16,6 +16,13 @@ class ReservaSearchSQL(BaseModel):
     usuario: str = None
     sala: str = None
 
+class Booking(BaseModel):
+    token: str
+    userEmail: str
+    roomCode: str
+    start: str
+    end: str
+
 def reserve_request(reserve: ReservaSQL,current_user: dict):
     conn = conectar_bd()
 

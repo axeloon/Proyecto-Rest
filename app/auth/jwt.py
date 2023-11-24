@@ -1,3 +1,5 @@
+import json
+
 # Importa las clases y módulos necesarios de FastAPI para la creación de la API
 from fastapi import HTTPException, status
 
@@ -12,10 +14,20 @@ from datetime import datetime, timedelta
 
 from .peopleAPI import get_google_email #Obtiene el email de las credenciales de google
 
+def load_config():
+    with open('config.json') as config_file:
+        config = json.load(config_file)
+    return config
+config = load_config()
+
 # Lista de ámbitos (scopes) para la autenticación con Google OAuth2
 SCOPES = ['https://www.googleapis.com/auth/contacts.readonly']
-PASSWD = '123456' #Contraseña para firmar el JWT
-ALGORITHM = "HS256" # Algoritmo utilizado para la codificación y decodificación del token JWT
+
+
+
+PASSWD = config.get('PASSWD') #Contraseña para firmar el JWT
+ALGORITHM = config.get('ALGORITHM') # Algoritmo utilizado para la codificación y decodificación del token JWT
+
 
 jwtToken = None
 
@@ -56,5 +68,5 @@ def verify_jwt():
             detail="Error al decodificar el token",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    
+
 
