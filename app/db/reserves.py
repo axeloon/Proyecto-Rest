@@ -2,10 +2,12 @@ from fastapi import HTTPException, status
 
 from pydantic import BaseModel
 
-from .db import conectar_bd
+from .db import conectar_bd # Importa la función conectar_bd desde un archivo local
 from app.resources.recursos import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_400_BAD_REQUEST
 
 
+
+# Definición de modelos Pydantic para la validación de datos en las peticiones
 class ReservaSQL(BaseModel):
     sala: str
     fechainicio: str
@@ -23,14 +25,19 @@ class Booking(BaseModel):
     start: str
     end: str
 
+# Función para realizar una solicitud de reserva
 def reserve_request(reserve: ReservaSQL,current_user: dict):
-    conn = conectar_bd()
+    conn = conectar_bd() # Conexión a la base de datos
 
+        # Manejo de la conexión a la base de datos
     if conn is not None:
         try:
             cursor = conn.cursor()
 
-            # Obtener la capacidad de la sala y verificar si está reservada
+            # Obtener información de la sala y verificar su disponibilidad
+            # Realizar la reserva si es posible
+            # Manejo de errores y cierre de la conexión en caso de fallo
+            # Retorna un mensaje de éxito si la reserva se realiza correctamente
             query_info = "SELECT capacidad, reservado FROM sala WHERE codigo = %s;"
             cursor.execute(query_info, (reserve.sala,))
             result = cursor.fetchone()
@@ -58,6 +65,7 @@ def reserve_request(reserve: ReservaSQL,current_user: dict):
 
                 return {"message": "Reserva creada exitosamente"}
         except Exception as e:
+            # Manejo de errores y retorno de un mensaje detallado en caso de fallo
             print("Error al ejecutar la consulta:", e)
             conn.close()
             raise HTTPException(
@@ -65,13 +73,16 @@ def reserve_request(reserve: ReservaSQL,current_user: dict):
                 detail=f"Error al realizar la reserva: {str(e)}"  # Detalle con el mensaje de error
             )
     else:
+        # Retorno de un mensaje de error en caso de no poder conectarse a la base de datos
         print("No se pudo conectar a la base de datos")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error al conectar con la base de datos"
         )
 
+# Función para obtener reservas según criterios de búsqueda
 def fetch_reservations(params: ReservaSearchSQL):
+     # Lógica similar a la anterior para manejar las reservas según los parámetros de búsqueda
     conn = conectar_bd()
 
     if conn is not None:
@@ -101,8 +112,10 @@ def fetch_reservations(params: ReservaSearchSQL):
     else:
         print("No se pudo conectar a la base de datos")
         return None
-    
+
+# Función para obtener el horario de una sala en una fecha específica
 def fetch_room_schedule(roomCode: str, date: str):
+    # Lógica similar a las anteriores para obtener el horario de una sala en una fecha específica
     conn = conectar_bd()
 
     if conn is not None:
@@ -127,8 +140,9 @@ def fetch_room_schedule(roomCode: str, date: str):
         print("No se pudo conectar a la base de datos")
         return None
     
-
+# Función para cancelar una reserva utilizando un token
 def cancel_reservation_token(token: str):
+    # Lógica similar a las anteriores para cancelar una reserva utilizando un token
     conn = conectar_bd()
 
     if conn is not None:

@@ -1,6 +1,5 @@
 from fastapi import HTTPException, status
 
-
 # Contenido HTML para una página web simple
 contenido_html = f""" 
         <h1>BOOKING UTEM</h1>
@@ -15,19 +14,24 @@ contenido_html = f"""
         <br></br>
         """
 
-#HTTP Exeptions
+# Definición de Excepciones HTTP
+# Define instancias de HTTPException con códigos de estado HTTP y mensajes de error personalizados.
+
+# HTTPException para el código de estado 400 (Bad Request)
 HTTP_400_BAD_REQUEST = HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="No se puede realizar la reserva debido a la capacidad máxima de la sala"
-                )
+    status_code=status.HTTP_400_BAD_REQUEST,
+    detail="No se puede realizar la reserva debido a la capacidad máxima de la sala"
+)
 
+# HTTPException para el código de estado 401 (Unauthorized)
 HTTP_401_UNAUTHORIZED = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Token inválido o expirado",
+    headers={"WWW-Authenticate": "Bearer"}  # Encabezado para indicar autenticación Bearer
+)
 
+# HTTPException para el código de estado 500 (Internal Server Error)
 HTTP_500_INTERNAL_SERVER_ERROR = HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error al conectar con la base de datos"
-        )
+    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    detail="Error al conectar con la base de datos"
+)

@@ -1,16 +1,24 @@
 import psycopg2
+import json
+
+def cargar_credenciales():
+    try:
+        with open('config.json') as config_file:
+            config = json.load(config_file)
+        return config.get('DB_CONFIG')
+    except FileNotFoundError as e:
+        print(f"El archivo 'credenciales.json' no se encontró: {e}")
+        return None
 
 def conectar_bd():
-    try:
-        conn = psycopg2.connect(
-            user="rkqkcsga",
-            password="wL1loYaH1PvjfgTmuJUq7r8vKUuFkod_",
-            database="rkqkcsga",
-            host="isabelle.db.elephantsql.com",
-            port=5432  # Puerto por defecto de PostgreSQL
-        )
-        print("Conexión con la BD establecida con éxito")
-        return conn
-    except (Exception, psycopg2.Error) as error:
-        print("Error al conectar a la base de datos:", error)
-        return None  # En caso de error, se devuelve None o se maneja de acuerdo a tus necesidades
+    db_config = cargar_credenciales()
+    if db_config:
+        try:
+            conn = psycopg2.connect(**db_config)
+            print("Conexión con la BD establecida con éxito")
+            return conn
+        except (Exception, psycopg2.Error) as error:
+            print("Error al conectar a la base de datos:", error)
+            return None
+    else:
+        return None

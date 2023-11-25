@@ -7,7 +7,6 @@ def get_google_email(creds: Credentials):
         service = build('people', 'v1', credentials=creds)
 
         # Llama al método de la API de People para obtener la información del usuario
-        # Este ejemplo supone que ya tienes permisos para acceder al perfil básico del usuario
         user_info = service.people().get(resourceName='people/me', personFields='emailAddresses').execute()
 
         # Obtiene el correo electrónico del usuario desde la respuesta
