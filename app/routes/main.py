@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse  # FastAPI - Respuesta HTML
 
 from typing import List, Union  # Typing - Definición de tipos List y Union
 
-from app.auth.google_auth import get_google_credentials, authorize_google_user  # Importaciones relacionadas con la autenticación de Google
+from app.auth.google_auth import get_google_credentials, get_login, callback_google   # Importaciones relacionadas con la autenticación de Google
 from app.auth.jwt import verify_jwt  # Importación para verificar tokens JWT
 
 from app.db.db import conectar_bd  # Conexión a la base de datos
@@ -34,11 +34,19 @@ def v1():
 def login():
     creds = get_google_credentials()  # Obtiene las credenciales de Google
     if not creds or not creds.valid:  # Verifica la validez de las credenciales
-        creds = authorize_google_user()  # Autoriza al usuario en caso de credenciales no válidas o ausentes
+        return get_login()  # Autoriza al usuario en caso de credenciales no válidas o ausentes
     if creds:
         return "Autenticación exitosa", status.HTTP_200_OK  # Retorna mensaje de autenticación exitosa con código 200
     else:
         return "Error en la autenticación", status.HTTP_401_UNAUTHORIZED  # Retorna mensaje de error de autenticación con código 401
+
+# Endpoint para manejar la URL de redirección después del inicio de sesión de Google
+@router.get("/v1/callback")
+def callback(code: str):
+    god = callback_google(code)
+    return god
+
+
 
 @router.get("/v1/rooms/{roomCode}")  # Ruta '/v1/rooms/{roomCode}' para obtener información de una sala por su código
 def get_room_by_code(roomCode: str, current_user: dict = Depends(verify_jwt)):  # Parámetro roomCode como parte de la URL y verificación del token JWT

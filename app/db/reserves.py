@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from .db import conectar_bd # Importa la función conectar_bd desde un archivo local
 from app.resources.recursos import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_400_BAD_REQUEST
 
+from typing import Optional
 
 
 # Definición de modelos Pydantic para la validación de datos en las peticiones
@@ -26,18 +27,15 @@ class Booking(BaseModel):
     end: str
 
 # Función para realizar una solicitud de reserva
-def reserve_request(reserve: ReservaSQL,current_user: dict):
-    conn = conectar_bd() # Conexión a la base de datos
 
-        # Manejo de la conexión a la base de datos
+def reserve_request(reserve: ReservaSQL, current_user: dict) -> Optional[dict]:
+    conn = conectar_bd()
+
     if conn is not None:
         try:
             cursor = conn.cursor()
 
-            # Obtener información de la sala y verificar su disponibilidad
-            # Realizar la reserva si es posible
-            # Manejo de errores y cierre de la conexión en caso de fallo
-            # Retorna un mensaje de éxito si la reserva se realiza correctamente
+            # Verificar disponibilidad de la sala
             query_info = "SELECT capacidad, reservado FROM sala WHERE codigo = %s;"
             cursor.execute(query_info, (reserve.sala,))
             result = cursor.fetchone()
@@ -56,29 +54,41 @@ def reserve_request(reserve: ReservaSQL,current_user: dict):
                 )
             else:
                 # Realizar la reserva
-                query_insert = "INSERT INTO reserva (usuario, sala, fechainicio, fechatermino) VALUES (%s, %s, %s, %s);"
+                query_insert = "INSERT INTO reserva (usuario, sala, fechainicio, fechatermino) VALUES (%s, %s, %s, %s) RETURNING *;"
                 values = (current_user['email'], reserve.sala, reserve.fechainicio, reserve.fechatermino)
                 cursor.execute(query_insert, values)
                 conn.commit()
+
+                # Obtener los detalles de la reserva recién creada
+                reservation_details = cursor.fetchone()
                 cursor.close()
                 conn.close()
 
-                return {"message": "Reserva creada exitosamente"}
+                # Formatear los resultados en un diccionario
+                reservation_info = {
+                    "token": reservation_details[0],
+                    "usuario": reservation_details[1],
+                    "sala": reservation_details[2],
+                    "fechainicio": str(reservation_details[3]),
+                    "fechatermino": str(reservation_details[4])
+                    # Agrega más campos según tu estructura de la tabla 'reserva'
+                }
+
+                return reservation_info
         except Exception as e:
-            # Manejo de errores y retorno de un mensaje detallado en caso de fallo
             print("Error al ejecutar la consulta:", e)
             conn.close()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error al realizar la reserva: {str(e)}"  # Detalle con el mensaje de error
+                detail=f"Error al realizar la reserva: {str(e)}"
             )
     else:
-        # Retorno de un mensaje de error en caso de no poder conectarse a la base de datos
         print("No se pudo conectar a la base de datos")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error al conectar con la base de datos"
         )
+
 
 # Función para obtener reservas según criterios de búsqueda
 def fetch_reservations(params: ReservaSearchSQL):
@@ -141,8 +151,7 @@ def fetch_room_schedule(roomCode: str, date: str):
         return None
     
 # Función para cancelar una reserva utilizando un token
-def cancel_reservation_token(token: str):
-    # Lógica similar a las anteriores para cancelar una reserva utilizando un token
+def cancel_reservation_token(token: str) -> Optional[dict]:
     conn = conectar_bd()
 
     if conn is not None:
@@ -155,13 +164,25 @@ def cancel_reservation_token(token: str):
             reservation = cursor.fetchone()
 
             if reservation:
-                # Si el token existe, anular la reserva eliminando la entrada correspondiente
+                # Guardar la información de la reserva antes de eliminarla
+                reservation_info = {
+                    "token": reservation[0],
+                    "usuario": reservation[1],
+                    "sala": reservation[2],
+                    "fechainicio": str(reservation[3]),
+                    "fechatermino": str(reservation[4]),
+                    # Agregar más campos según la estructura de tu tabla 'reserva'
+                }
+
+                # Anular la reserva eliminando la entrada correspondiente
                 query_cancel_reservation = "DELETE FROM reserva WHERE token = %s;"
                 cursor.execute(query_cancel_reservation, (token,))
                 conn.commit()
                 cursor.close()
                 conn.close()
-                return {"message": "Reserva anulada exitosamente"}
+
+                # Devolver la información de la reserva eliminada
+                return reservation_info
             else:
                 # Si el token no existe, retornar un mensaje de error
                 raise HTTPException(
